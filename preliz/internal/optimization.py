@@ -78,6 +78,23 @@ def optimize_quartile(dist, x_vals, none_idx, fixed):
     return opt
 
 
+def optimize_quantiles(dist, x_vals, p_vals, none_idx, fixed):
+    def func(params, dist, x_vals):
+        params = get_params(dist, params, none_idx, fixed)
+        dist._parametrization(**params)
+        loss = dist.cdf(x_vals) - p_vals
+        return loss
+
+    init_vals = np.array(dist.params)[none_idx]
+    bounds = np.array(dist.params_support)[none_idx]
+    bounds = list(zip(*bounds))
+
+    opt = least_squares(func, x0=init_vals, args=(dist, x_vals), bounds=bounds)
+    params = get_params(dist, opt["x"], none_idx, fixed)
+    dist._parametrization(**params)
+    return opt
+
+
 def optimize_pdf(dist, x_vals, epdf, none_idx, fixed):
     def func(params, dist, x_vals, epdf):
         params = get_params(dist, params, none_idx, fixed)
