@@ -32,6 +32,7 @@ from preliz.distributions.mixture import Mixture
 from preliz.distributions.moyal import Moyal
 from preliz.distributions.negativebinomial import NegativeBinomial
 from preliz.distributions.normal import Normal
+from preliz.distributions.pynormal import PyNormal
 from preliz.distributions.pareto import Pareto
 from preliz.distributions.poisson import Poisson
 from preliz.distributions.rice import Rice
@@ -72,6 +73,7 @@ all_continuous = [
     LogitNormal,
     Moyal,
     Normal,
+    PyNormal,
     Pareto,
     Rice,
     ScaledInverseChiSquared,

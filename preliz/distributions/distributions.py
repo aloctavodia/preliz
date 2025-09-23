@@ -10,7 +10,12 @@ except ImportError:
     pass
 import numpy as np
 
-from preliz.internal.distribution_helper import init_vals, valid_distribution, valid_scalar_params
+from preliz.internal.distribution_helper import (
+    init_vals,
+    valid_distribution,
+    valid_scalar_params,
+    DistributionMeta,
+)
 from preliz.internal.optimization import find_hdi, find_mode
 from preliz.internal.plot_helper import (
     check_inside_notebook,

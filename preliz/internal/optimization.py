@@ -176,7 +176,7 @@ def optimize_moments_rice(mean, std_dev):
 def optimize_ml(dist, sample):
     def negll(params, dist, sample):
         dist._update(*params)
-        return dist._neg_logpdf(sample)
+        return -dist.logpdf(sample).sum()
 
     dist._fit_moments(np.mean(sample), np.std(sample))
     init_vals = dist.params
@@ -378,7 +378,7 @@ def fit_to_sample(selected_distributions, sample, x_min, x_max):
                 for s in sample:
                     dist_i = copy(dist)
                     dist_i._fit_mle(s)
-                    neg_logpdf += dist_i._neg_logpdf(s)
+                    neg_logpdf += -dist_i.logpdf(s).sum()
                     dists.append(dist_i)
                 new_dict = {}
                 for d in dists:
@@ -392,7 +392,7 @@ def fit_to_sample(selected_distributions, sample, x_min, x_max):
                 dist._parametrization(**{k: np.asarray(v) for k, v in new_dict.items()})
             else:
                 dist._fit_mle(sample)
-                neg_logpdf = dist._neg_logpdf(sample)
+                neg_logpdf = -dist.logpdf(sample).sum()
             corr = get_penalization(sample.size, dist)
             loss = neg_logpdf + corr
         fitted.update(loss, dist)
