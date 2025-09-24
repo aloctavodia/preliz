@@ -1,4 +1,6 @@
 import numpy as np
+import pytensor.tensor as pt
+from distributions import normal as pynormal_
 
 from preliz.distributions.distributions import Continuous
 from preliz.internal.distribution_helper import (
@@ -6,13 +8,12 @@ from preliz.internal.distribution_helper import (
     eps,
     from_precision,
     to_precision,
-    DistributionMeta,
+    pytensor_jit,
 )
 from preliz.internal.special import mean_and_std
-from distributions import normal as normal_
 
 
-class PyNormal(Continuous, metaclass=DistributionMeta):
+class PyNormal(Continuous):
     r"""
     Normal distribution.
 
@@ -26,7 +27,6 @@ class PyNormal(Continuous, metaclass=DistributionMeta):
 
     .. plot::
         :context: close-figs
-
 
         from preliz import Normal, style
         style.use('preliz-doc')
@@ -59,11 +59,10 @@ class PyNormal(Continuous, metaclass=DistributionMeta):
     tau : float
         Precision (tau > 0).
     """
-    _dist_module = normal_
 
     def __init__(self, mu=None, sigma=None, tau=None):
         super().__init__()
-        self.support = (-np.inf, np.inf)
+        self.support = (-pt.inf, pt.inf)
         self._parametrization(mu, sigma, tau)
 
     def _parametrization(self, mu=None, sigma=None, tau=None):
@@ -73,7 +72,7 @@ class PyNormal(Continuous, metaclass=DistributionMeta):
             )
 
         names = ("mu", "sigma")
-        self.params_support = ((-np.inf, np.inf), (eps, np.inf))
+        self.params_support = ((-pt.inf, pt.inf), (eps, pt.inf))
 
         if tau is not None:
             self.tau = tau
@@ -103,3 +102,147 @@ class PyNormal(Continuous, metaclass=DistributionMeta):
 
     def _fit_mle(self, sample):
         self._update(*mean_and_std(sample))
+
+    def pdf(self, x):
+        return pyt_pdf(x, self.mu, self.sigma)
+
+    def cdf(self, x):
+        return pyt_cdf(x, self.mu, self.sigma)
+
+    def ppf(self, q):
+        return pyt_ppf(q, self.mu, self.sigma)
+
+    def sf(self, x):
+        return pyt_sf(x, self.mu, self.sigma)
+
+    def isf(self, q):
+        return pyt_isf(q, self.mu, self.sigma)
+
+    def logpdf(self, x):
+        return pyt_logpdf(x, self.mu, self.sigma)
+
+    def logcdf(self, x):
+        return pyt_logcdf(x, self.mu, self.sigma)
+
+    def logsf(self, x):
+        return pyt_logsf(x, self.mu, self.sigma)
+
+    def logisf(self, q):
+        return pyt_logisf(q, self.mu, self.sigma)
+
+    def entropy(self):
+        return pyt_entropy(self.mu, self.sigma)
+
+    def mean(self):
+        return pyt_mean(self.mu, self.sigma)
+
+    def mode(self):
+        return pyt_mode(self.mu, self.sigma)
+
+    def median(self):
+        return pyt_median(self.mu, self.sigma)
+
+    def var(self):
+        return pyt_var(self.mu, self.sigma)
+
+    def std(self):
+        return pyt_std(self.mu, self.sigma)
+
+    def skewness(self):
+        return pyt_skewness(self.mu, self.sigma)
+
+    def kurtosis(self):
+        return pyt_kurtosis(self.mu, self.sigma)
+
+    def rvs(self, size=None, random_state=None):
+        return pyt_rvs(self.mu, self.sigma, size)
+
+
+@pytensor_jit
+def pyt_pdf(x, mu, sigma):
+    return pynormal_.pdf(x, mu, sigma)
+
+
+@pytensor_jit
+def pyt_cdf(x, mu, sigma):
+    return pynormal_.cdf(x, mu, sigma)
+
+
+@pytensor_jit
+def pyt_ppf(q, mu, sigma):
+    return pynormal_.ppf(q, mu, sigma)
+
+
+@pytensor_jit
+def pyt_sf(x, mu, sigma):
+    return pynormal_.sf(x, mu, sigma)
+
+
+@pytensor_jit
+def pyt_isf(q, mu, sigma):
+    return pynormal_.isf(q, mu, sigma)
+
+
+@pytensor_jit
+def pyt_logpdf(x, mu, sigma):
+    return pynormal_.logpdf(x, mu, sigma)
+
+
+@pytensor_jit
+def pyt_logcdf(x, mu, sigma):
+    return pynormal_.logcdf(x, mu, sigma)
+
+
+@pytensor_jit
+def pyt_logsf(x, mu, sigma):
+    return pynormal_.logsf(x, mu, sigma)
+
+
+@pytensor_jit
+def pyt_logisf(q, mu, sigma):
+    return pynormal_.logisf(q, mu, sigma)
+
+
+@pytensor_jit
+def pyt_entropy(mu, sigma):
+    return pynormal_.entropy(mu, sigma)
+
+
+@pytensor_jit
+def pyt_mean(mu, sigma):
+    return pynormal_.mean(mu, sigma)
+
+
+@pytensor_jit
+def pyt_mode(mu, sigma):
+    return pynormal_.mode(mu, sigma)
+
+
+@pytensor_jit
+def pyt_median(mu, sigma):
+    return pynormal_.median(mu, sigma)
+
+
+@pytensor_jit
+def pyt_var(mu, sigma):
+    return pynormal_.var(mu, sigma)
+
+
+@pytensor_jit
+def pyt_std(mu, sigma):
+    return pynormal_.std(mu, sigma)
+
+
+@pytensor_jit
+def pyt_skewness(mu, sigma):
+    return pynormal_.skewness(mu, sigma)
+
+
+@pytensor_jit
+def pyt_kurtosis(mu, sigma):
+    return pynormal_.kurtosis(mu, sigma)
+
+
+@pytensor_jit
+def pyt_rvs(mu, sigma, size):
+    return pt.random.normal(mu, sigma, size)

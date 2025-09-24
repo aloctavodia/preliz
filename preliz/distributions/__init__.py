@@ -32,9 +32,9 @@ from preliz.distributions.mixture import Mixture
 from preliz.distributions.moyal import Moyal
 from preliz.distributions.negativebinomial import NegativeBinomial
 from preliz.distributions.normal import Normal
-from preliz.distributions.pynormal import PyNormal
 from preliz.distributions.pareto import Pareto
 from preliz.distributions.poisson import Poisson
+from preliz.distributions.pynormal import PyNormal
 from preliz.distributions.rice import Rice
 from preliz.distributions.scaled_inverse_chi_squared import ScaledInverseChiSquared
 from preliz.distributions.skew_studentt import SkewStudentT

@@ -98,10 +98,11 @@ def num_kurtosis(dist):
 
 
 from functools import wraps
+
 import numpy as np
 from pytensor import function
-from pytensor.tensor import tensor
 from pytensor.compile.function.types import Function
+from pytensor.tensor import tensor
 
 
 def pytensor_jit(func, **compile_kwargs):
@@ -132,115 +133,6 @@ def pytensor_jit(func, **compile_kwargs):
         return compiled_func(*args)
 
     return inner_func
-
-
-class DistributionMeta(type):
-    """
-    Metaclass that automatically generates jitted distribution methods.
-
-    This metaclass automatically creates methods like pdf, cdf, ppf, etc. by:
-    1. Looking for a _dist_module attribute in the class
-    2. Creating jitted versions of functions from that module
-    3. Adding wrapper methods that call the jitted functions with the distribution's parameters
-    """
-
-    # Standard distribution methods to auto-generate
-    STANDARD_METHODS = ["pdf", "cdf", "ppf", "logpdf", "logcdf", "sf", "logsf", "isf"]
-
-    # Methods that don't need the input argument (just parameters)
-    PARAMETER_ONLY_METHODS = [
-        "mean",
-        "median",
-        "mode",
-        "var",
-        "std",
-        "skewness",
-        "kurtosis",
-        "entropy",
-    ]
-
-    # Methods that need special handling for random sampling
-    SPECIAL_METHODS = ["rvs"]
-
-    def __new__(cls, name, bases, namespace, **kwargs):
-        # Get the distribution module (e.g., normal_)
-        dist_module = namespace.get("_dist_module")
-
-        if dist_module is not None:
-            cls._generate_standard_methods(namespace, dist_module)
-            cls._generate_parameter_methods(namespace, dist_module)
-            cls._generate_special_methods(namespace, dist_module)
-
-        return super().__new__(cls, name, bases, namespace)
-
-    @classmethod
-    def _generate_standard_methods(cls, namespace, dist_module):
-        """Generate methods that take input x and distribution parameters."""
-        for method_name in cls.STANDARD_METHODS:
-            if hasattr(dist_module, method_name) and method_name not in namespace:
-                # Create jitted version
-                jitted_func = pytensor_jit(getattr(dist_module, method_name))
-
-                # Create method that calls jitted function
-                def make_method(jitted_fn, method_name):
-                    def method(self, x):
-                        if not self.is_frozen:
-                            raise ValueError(
-                                f"Cannot call {method_name} on unfrozen distribution. "
-                                "Set parameters first."
-                            )
-                        return jitted_fn(x, *self.params)
-
-                    method.__name__ = method_name
-                    method.__doc__ = (
-                        f"Auto-generated {method_name} method using jitted implementation."
-                    )
-                    return method
-
-                namespace[method_name] = make_method(jitted_func, method_name)
-
-    @classmethod
-    def _generate_parameter_methods(cls, namespace, dist_module):
-        """Generate methods that only need distribution parameters (no input x)."""
-        for method_name in cls.PARAMETER_ONLY_METHODS:
-            if hasattr(dist_module, method_name) and method_name not in namespace:
-                # Create jitted version
-                jitted_func = pytensor_jit(getattr(dist_module, method_name))
-
-                # Create method that calls jitted function
-                def make_method(jitted_fn, method_name):
-                    def method(self):
-                        if not self.is_frozen:
-                            raise ValueError(
-                                f"Cannot call {method_name} on unfrozen distribution. "
-                                "Set parameters first."
-                            )
-                        return jitted_fn(*self.params)
-
-                    method.__name__ = method_name
-                    method.__doc__ = (
-                        f"Auto-generated {method_name} method using jitted implementation."
-                    )
-                    return method
-
-                namespace[method_name] = make_method(jitted_func, method_name)
-
-    @classmethod
-    def _generate_special_methods(cls, namespace, dist_module):
-        """Generate special methods like rvs that have different signatures."""
-        if hasattr(dist_module, "rvs") and "rvs" not in namespace:
-            jitted_func = pytensor_jit(getattr(dist_module, "rvs"))
-
-            def rvs(self, size=None, random_state=None):
-                """Random sample."""
-                if not self.is_frozen:
-                    raise ValueError(
-                        "Cannot call rvs on unfrozen distribution. " "Set parameters first."
-                    )
-                # Call with parameters first, then keyword arguments
-                return jitted_func(*self.params, random_state, size)
-
-            namespace["rvs"] = rvs
 
 
 init_vals = {
