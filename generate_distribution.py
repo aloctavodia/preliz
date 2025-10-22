@@ -8,7 +8,6 @@ import sys
 
 def generate_distribution_template(class_name, parameters):
     """Generate a distribution template file."""
-
     mod_name = class_name.lower()
     param_names = ", ".join(parameters)
     param_self = ", ".join([f"self.{param}" for param in parameters])

@@ -3,7 +3,6 @@ Beta distribution.
 """
 
 import numpy as np
-import pytensor.tensor as pt
 from distributions import beta as beta_
 
 from preliz.distributions.distributions import Continuous

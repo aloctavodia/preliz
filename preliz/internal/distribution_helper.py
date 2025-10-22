@@ -1,11 +1,11 @@
-from functools import wraps
 import re
+from functools import wraps
 from sys import modules
 
 import numpy as np
 from pytensor import function
-from pytensor.tensor import tensor
 from pytensor.compile.function.types import Function, In
+from pytensor.tensor import tensor
 from pytensor.tensor.random.type import random_generator_type
 
 eps = np.finfo(float).eps

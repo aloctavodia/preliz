@@ -7,9 +7,9 @@ from preliz.internal.distribution_helper import (
     all_not_none,
     eps,
     from_precision,
-    to_precision,
     pytensor_jit,
     pytensor_rng_jit,
+    to_precision,
 )
 from preliz.internal.special import mean_and_std
 
