@@ -21,7 +21,7 @@ import pytensor.tensor as pt
 from distributions import {mod_name} as {mod_name}_
 
 from preliz.distributions.distributions import Continuous
-from preliz.internal.distribution_helper import all_not_none, any_not_none, eps, pytensor_jit
+from preliz.internal.distribution_helper import all_not_none, any_not_none, eps, pytensor_jit, pytensor_rng_jit
 from preliz.internal.special import  cdf_bounds, ppf_bounds_cont
 
 
@@ -141,7 +141,10 @@ class {class_name}(Distribution):
         return pyt_kurtosis({param_self})
 
     def rvs(self, size=None, random_state=None):
-        return pyt_rvs({param_self}, size=size, random_state=random_state)
+        if random_state is None:
+            random_state = np.random.default_rng()
+        return pyt_rvs({param_self}, size=size, rng=random_state)
+
 
 @pytensor_jit
 def pyt_pdf(x, {param_names}):
@@ -211,9 +214,9 @@ def pyt_skewness({param_names}):
 def pyt_kurtosis({param_names}):
     return {mod_name}_.kurtosis({param_names})
 
-@pytensor_jit
-def pyt_rvs({param_names}, size, random_state):
-    return {mod_name}_.rvs({param_names}, size=size, random_state=random_state)
+@pytensor_rng_jit
+def pyt_rvs({param_names}, size, rng):
+    return {mod_name}_.rvs({param_names}, size=size, random_state=rng)
 '''
 
     return template

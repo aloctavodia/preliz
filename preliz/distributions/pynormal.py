@@ -9,6 +9,7 @@ from preliz.internal.distribution_helper import (
     from_precision,
     to_precision,
     pytensor_jit,
+    pytensor_rng_jit,
 )
 from preliz.internal.special import mean_and_std
 
@@ -86,8 +87,8 @@ class PyNormal(Continuous):
             self._update(mu, sigma)
 
     def _update(self, mu, sigma):
-        self.mu = np.float64(mu)
-        self.sigma = np.float64(sigma)
+        self.mu = mu  # np.float64(mu)
+        self.sigma = sigma  # np.float64(sigma)
         self.tau = to_precision(sigma)
 
         if self.param_names[1] == "sigma":
@@ -155,7 +156,9 @@ class PyNormal(Continuous):
         return pyt_kurtosis(self.mu, self.sigma)
 
     def rvs(self, size=None, random_state=None):
-        return pyt_rvs(self.mu, self.sigma, size)
+        if random_state is None:
+            random_state = np.random.default_rng()
+        return pyt_rvs(self.mu, self.sigma, size=size, rng=random_state)
 
 
 @pytensor_jit
@@ -243,6 +246,6 @@ def pyt_kurtosis(mu, sigma):
     return pynormal_.kurtosis(mu, sigma)
 
 
-@pytensor_jit
-def pyt_rvs(mu, sigma, size):
-    return pt.random.normal(mu, sigma, size)
+@pytensor_rng_jit
+def pyt_rvs(mu, sigma, size, rng):
+    return pynormal_.rvs(mu, sigma, size=size, random_state=rng)

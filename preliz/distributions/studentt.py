@@ -227,14 +227,14 @@ def nb_entropy(nu, sigma):
 
 @nb.vectorize(nopython=True, cache=True)
 def nb_logpdf(x, nu, mu, sigma):
-    if nu > 1e10:
+    if nu > 1e5:
         return -np.log(sigma) - 0.5 * np.log(2 * np.pi) - 0.5 * ((x - mu) / sigma) ** 2
     else:
         return (
             gammaln((nu + 1) / 2)
             - gammaln(nu / 2)
             - 0.5 * np.log(nu * np.pi * sigma**2)
-            - 0.5 * (nu + 1) * np.log(1 + ((x - mu) / sigma) ** 2 / nu)
+            - 0.5 * (nu + 1) * np.log1p((x - mu) ** 2 / (sigma**2 * nu))
         )
 
 

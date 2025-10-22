@@ -177,3 +177,13 @@ def nb_logpdf(x, mu, sigma):
 @nb.njit(cache=True)
 def nb_neg_logpdf(x, mu, sigma):
     return -(nb_logpdf(x, mu, sigma)).sum()
+
+
+def from_tau(tau):
+    sigma = 1 / pt.sqrt(tau)
+    return sigma
+
+
+def to_tau(sigma):
+    tau = pt.power(sigma, -2)
+    return tau
