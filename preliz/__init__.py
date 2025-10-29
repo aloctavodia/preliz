@@ -17,6 +17,7 @@ from preliz.unidimensional import *
 from preliz.multidimensional import *
 from preliz.internal.rcparams import rc_context, rcParams
 from preliz.internal.citations import citations
+from preliz.predictive.sample import sample
 
 
 __version__ = "0.22.0"
