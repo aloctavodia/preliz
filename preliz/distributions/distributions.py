@@ -23,8 +23,91 @@ from preliz.internal.plot_helper import (
 )
 from preliz.internal.rcparams import rcParams
 
+from contextlib import contextmanager
 
-class Distribution:
+_sampling_context = False
+_sampling_cache = None
+
+@contextmanager
+def sampling_context():
+    global _sampling_context, _sampling_cache
+    _sampling_context = True
+    _sampling_cache = {}
+    try:
+        yield
+    finally:
+        _sampling_context = False
+        _sampling_cache = None
+
+def _eval(x):
+    """Evaluate a node or return its raw value, depending on context."""
+    if isinstance(x, (Distribution, Expression)):
+        return x._eval()
+    return x
+
+
+def sample(model_fn, draws=1):
+    samples = []
+    with sampling_context():
+        for _ in range(draws):
+            value = model_fn()
+            if hasattr(value, "rvs"):
+                samples.append(value.rvs())
+            elif hasattr(value, "evaluate"):
+                samples.append(value.evaluate())
+            else:
+                samples.append(value)
+    return np.array(samples)
+
+
+class BaseNode:
+    def _binary_op(self, other, op):
+        if _sampling_context:
+            return op(_eval(self), _eval(other))
+        return Expression(op, self, other)
+    
+
+    # comparisons
+    def __lt__(self, other): return self._binary_op(other, lambda a,b: a < b)
+    def __le__(self, other): return self._binary_op(other, lambda a,b: a <= b)
+    def __gt__(self, other): return self._binary_op(other, lambda a,b: a > b)
+    def __ge__(self, other): return self._binary_op(other, lambda a,b: a >= b)
+    def __eq__(self, other): return self._binary_op(other, lambda a,b: a == b)
+    def __ne__(self, other): return self._binary_op(other, lambda a,b: a != b)
+
+    # logicals
+    def __and__(self, other): return self._binary_op(other, lambda a,b: a & b)
+    def __or__(self, other):  return self._binary_op(other, lambda a,b: a | b)
+    def __invert__(self):     return Expression(lambda a: ~a, self)
+
+    # slicing / indexing
+    def __getitem__(self, item): return Expression(lambda a: a[item], self)
+
+
+
+class Expression(BaseNode):
+    def __init__(self, op, *args):
+        self.op = op
+        self.args = args
+
+    def evaluate(self):
+        vals = [_eval(a) for a in self.args]
+        return self.op(*vals)
+
+    def __array_ufunc__(self, ufunc, method, *inputs, **kwargs):
+        def op(*args): return getattr(ufunc, method)(*args, **kwargs)
+        if _sampling_context:
+            vals = [_eval(i) for i in inputs]
+            return op(*vals)
+        return Expression(op, *inputs)
+    
+    def _eval(self):
+        vals = [a._eval() if isinstance(a, (Distribution, Expression)) else a
+                for a in self.args]
+        return self.op(*vals)
+
+
+class Distribution(BaseNode):
     """
     Base class for distributions.
 
@@ -34,6 +117,46 @@ class Distribution:
     def __init__(self):
         self.is_frozen = False
         self.opt = None
+
+    def __call__(self, *args, **kwargs):
+        return self.rvs(*args, **kwargs) if _sampling_context else self
+
+    def __add__(self, other): return self._binary_op(other, lambda a,b: a + b)
+    def __sub__(self, other): return self._binary_op(other, lambda a,b: a - b)
+    def __radd__(self, other): return self._binary_op(other, lambda a,b: b + a)
+    def __mul__(self, other): return self._binary_op(other, lambda a,b: a * b)
+    def __rmul__(self, other): return self._binary_op(other, lambda a,b: b * a)
+    def __truediv__(self, other): return self._binary_op(other, lambda a,b: a / b)
+    def __rsub__(self, other): return self._binary_op(other, lambda a,b: b - a)
+    def __floordiv__(self, other): return self._binary_op(other, lambda a,b: a // b)
+    def __rfloordiv__(self, other): return self._binary_op(other, lambda a,b: b // a)
+    def __mod__(self, other): return self._binary_op(other, lambda a,b: a % b)
+    def __rmod__(self, other): return self._binary_op(other, lambda a,b: b % a)
+    def __pow__(self, other): return self._binary_op(other, lambda a,b: a ** b)
+    def __rpow__(self, other): return self._binary_op(other, lambda a,b: b ** a)
+    def __neg__(self): return Expression(lambda a: -a, self)
+    def __pos__(self): return Expression(lambda a: +a, self)
+    def __abs__(self): return Expression(lambda a: abs(a), self)
+
+
+    def __array_ufunc__(self, ufunc, method, *inputs, **kwargs):
+        def op(*args): return getattr(ufunc, method)(*args, **kwargs)
+        if _sampling_context:
+            vals = [_eval(i) for i in inputs]
+            return op(*vals)
+        return Expression(op, *inputs)
+
+    def _eval(self):
+        """Return a memoized sample inside the sampling context."""
+        global _sampling_cache
+        if _sampling_context:
+            key = id(self)
+            if key not in _sampling_cache:
+                _sampling_cache[key] = self.rvs()
+            return _sampling_cache[key]
+        else:
+            return self  # outside context, remain lazy
+
 
     def __repr__(self):
         name = self.__class__.__name__
@@ -66,6 +189,9 @@ class Distribution:
             return f"{bolded_name}({description})"
         else:
             return name
+    
+
+
 
     @property
     def params_dict(self):
