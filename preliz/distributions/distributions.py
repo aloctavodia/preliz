@@ -8,6 +8,8 @@ try:
     from ipywidgets import interactive
 except ImportError:
     pass
+from contextlib import contextmanager
+
 import numpy as np
 
 from preliz.internal.distribution_helper import init_vals, valid_distribution, valid_scalar_params
@@ -22,8 +24,6 @@ from preliz.internal.plot_helper import (
     plot_sf,
 )
 from preliz.internal.rcparams import rcParams
-
-from contextlib import contextmanager
 
 _sampling_context = False
 _sampling_cache = None
@@ -65,7 +65,7 @@ class BaseNode:
         if _sampling_context:
             return op(_eval(self), _eval(other))
         return Expression(op, self, other)
-    
+
 
     # comparisons
     def __lt__(self, other): return self._binary_op(other, lambda a,b: a < b)
@@ -100,7 +100,7 @@ class Expression(BaseNode):
             vals = [_eval(i) for i in inputs]
             return op(*vals)
         return Expression(op, *inputs)
-    
+
     def _eval(self):
         vals = [a._eval() if isinstance(a, (Distribution, Expression)) else a
                 for a in self.args]
@@ -189,7 +189,7 @@ class Distribution(BaseNode):
             return f"{bolded_name}({description})"
         else:
             return name
-    
+
 
 
 
