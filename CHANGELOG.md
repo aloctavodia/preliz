@@ -1,3 +1,16 @@
+<a id="0.27.1"></a>
+# [0.27.1](https://github.com/arviz-devs/preliz/releases/tag/0.27.1) - 2026-07-07
+
+## What's Changed
+* Update CODE_OF_CONDUCT.md by [@OriolAbril](https://github.com/OriolAbril) in [#729](https://github.com/arviz-devs/preliz/pull/729)
+* Fix compatibility with pymc and bambi by [@aloctavodia](https://github.com/aloctavodia) in [#730](https://github.com/arviz-devs/preliz/pull/730)
+
+
+**Full Changelog**: https://github.com/arviz-devs/preliz/compare/0.27.0...0.27.1
+
+[Changes][0.27.1]
+
+
 <a id="0.27.0"></a>
 # [0.27.0](https://github.com/arviz-devs/preliz/releases/tag/0.27.0) - 2026-06-18
 
@@ -1019,6 +1032,7 @@ Full Changelog**: https://github.com/arviz-devs/preliz/compare/0.7.0...0.8.0
 [Changes][0.0.2]
 
 
+[0.27.1]: https://github.com/arviz-devs/preliz/compare/0.27.0...0.27.1
 [0.27.0]: https://github.com/arviz-devs/preliz/compare/0.26.0...0.27.0
 [0.26.0]: https://github.com/arviz-devs/preliz/compare/0.25.0...0.26.0
 [0.25.0]: https://github.com/arviz-devs/preliz/compare/0.24.0...0.25.0
